@@ -10,7 +10,6 @@ about = "Sync files."
 [dependencies]
 pnet = "0.27"
 itertools = "0.9"
-structopt = "0.3"
 hostname = "0.3"
 uuid = { version = "0.8", features = ["serde", "v4"] }
 lazy_static = "1.4"
@@ -18,3 +17,5 @@ directories = "3.0"
 log = "0.4"
 serde = { version = "1.0", features = ["derive"] }
 toml = "0.5"
+clap = "2.33.3"
+derive-serialize-into = "0.3.1"
