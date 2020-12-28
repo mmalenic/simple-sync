@@ -89,10 +89,7 @@ impl Options {
                 None => config.device_name.clone().unwrap_or_else(|| OsString::from(Uuid::new_v4().to_string())),
                 Some(value) => Options::validate_type_or_exit(value, "a valid name")
             },
-            use_hostname: match app.value_of(OPTION_USE_HOSTNAME) {
-                None => config.use_hostname.clone().unwrap_or_else(|| true),
-                Some(value) => Options::validate_type_or_exit(value, "a flag")
-            },
+            use_hostname: if app.is_present(OPTION_USE_HOSTNAME) { true } else { config.use_hostname.clone().unwrap_or_else(|| true) },
             port: match app.value_of(OPTION_PORT) {
                 None => config.port.clone().unwrap_or_else(|| 11529),
                 Some(value) => Options::validate_type_or_exit(value, "a port")
