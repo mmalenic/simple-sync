@@ -1,5 +1,5 @@
 use std::ffi::OsString;
-use std::fs::{create_dir_all, read_to_string, write};
+use std::fs::{create_dir_all, read_to_string, write, File};
 use std::net::{Ipv4Addr, Ipv6Addr};
 use std::path::PathBuf;
 use std::str::FromStr;
@@ -13,8 +13,15 @@ use structopt::StructOpt;
 use lazy_static::lazy_static;
 
 use crate::PROJECT_NAME;
+use std::io::{BufReader, BufRead, Error};
+use itertools::Itertools;
 
 const CONFIG_FILE: &'static str = "config.toml";
+
+lazy_static! {
+    static ref DEVICE_ID: String = Uuid::new_v4().to_string();
+    static ref DEVICE_NAME: OsString = get_hostname();
+}
 
 macro_rules! options_string {
     ($name:expr) => {
@@ -46,11 +53,6 @@ macro_rules! merge_with {
             }
         }
     }
-}
-
-lazy_static! {
-    static ref DEVICE_ID: String = Uuid::new_v4().to_string();
-    static ref DEVICE_NAME: OsString = get_hostname();
 }
 
 merge_with! {
@@ -119,33 +121,26 @@ impl Options {
         Some(serialized)
     }
 
-    fn from_conf(file_path: &PathBuf) -> Self {
-        match read_to_string(file_path) {
-            Ok(config) => Self::deserialize(&config),
+    fn from_conf(path: &PathBuf) -> Self {
+        match read_to_string(path) {
+            Ok(file) => {
+                let config = file
+                    .lines()
+                    .map(|line| line.trim_start_matches("-"))
+                    .join("\n");
+                Self::deserialize(&config)
+            }
             Err(e) => {
                 warn!("Unable to read config file: {}", e);
-                Self::default()
+                return Self::default();
             }
         }
     }
 
-    fn write_to_file(&self, file_path: &PathBuf) {
+    fn write_to_file(&self, path: &PathBuf) {
         if let Some(x) = self.serialize() {
-            write(file_path, x).unwrap_or_else(|e| warn!("Unable to write config: {}", e));
+            write(path, x).unwrap_or_else(|e| warn!("Unable to write config: {}", e));
         };
-    }
-
-    fn validate_type_or_exit<T: FromStr>(value: &str, message: &str) -> T {
-        match T::from_str(value) {
-            Ok(value) => value,
-            Err(_) => {
-                clap::Error {
-                    message: format!("error: Invalid value: unable to parse {} as {}", value, message),
-                    kind: clap::ErrorKind::InvalidValue,
-                    info: None
-                }.exit();
-            }
-        }
     }
 }
 

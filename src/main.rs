@@ -9,6 +9,7 @@ use structopt::StructOpt;
 use uuid::Uuid;
 use std::ffi::OsString;
 use clap::ArgMatches;
+use serde::Serialize;
 
 const PROJECT_NAME: &str = "simple-simple-sync";
 
