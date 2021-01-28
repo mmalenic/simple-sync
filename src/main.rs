@@ -8,6 +8,7 @@ use std::net::{Ipv6Addr, Ipv4Addr};
 use structopt::StructOpt;
 use uuid::Uuid;
 use std::ffi::OsString;
+use clap::ArgMatches;
 
 const PROJECT_NAME: &str = "simple-simple-sync";
 
