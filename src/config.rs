@@ -123,13 +123,7 @@ impl Options {
 
     fn from_conf(path: &PathBuf) -> Self {
         match read_to_string(path) {
-            Ok(file) => {
-                let config = file
-                    .lines()
-                    .map(|line| line.trim_start_matches("-"))
-                    .join("\n");
-                Self::deserialize(&config)
-            }
+            Ok(file) => Self::deserialize(&file),
             Err(e) => {
                 warn!("Unable to read config file: {}", e);
                 return Self::default();
