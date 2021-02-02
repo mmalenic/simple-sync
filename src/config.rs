@@ -1,21 +1,17 @@
 use std::ffi::OsString;
-use std::fs::{create_dir_all, read_to_string, write, File};
+use std::fs::{create_dir_all, read_to_string, write};
 use std::net::{Ipv4Addr, Ipv6Addr};
 use std::path::PathBuf;
-use std::str::FromStr;
 
-use clap::{App, Arg, ArgMatches};
+use clap::ArgMatches;
 use directories::ProjectDirs;
-use log::{info, warn};
-use serde::{Deserialize, Serialize, Serializer};
-use uuid::Uuid;
-use structopt::StructOpt;
 use lazy_static::lazy_static;
+use log::warn;
+use serde::{Deserialize, Serialize};
+use structopt::StructOpt;
+use uuid::Uuid;
 
 use crate::PROJECT_NAME;
-use std::io::{BufReader, BufRead, Error};
-use itertools::Itertools;
-use serde::ser::SerializeStruct;
 
 const CONFIG_FILE: &'static str = "config.toml";
 const PROGRAM_DATA: &'static str = "data.toml";

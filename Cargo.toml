@@ -1,0 +1,24 @@
+[package]
+name = "simple-sync"
+version = "0.1.0"
+authors = ["Marko Malenic <mmalenic1@gmail.com>"]
+edition = "2018"
+about = "Sync files."
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+pnet = "0.27"
+hostname = "0.3"
+uuid = { version = "0.8", features = ["serde", "v4"] }
+lazy_static = "1.4"
+directories = "3.0"
+log = "0.4"
+serde = { version = "1.0", features = ["derive"] }
+toml = "0.5"
+clap = "2.33.3"
+derive-serialize-into = "0.3.1"
+structopt = "0.3.21"
+
+[dev-dependencies]
+tempfile = "3.1.0"
