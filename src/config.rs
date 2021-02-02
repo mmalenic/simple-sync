@@ -7,7 +7,7 @@ use std::str::FromStr;
 use clap::{App, Arg, ArgMatches};
 use directories::ProjectDirs;
 use log::{info, warn};
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize, Serializer};
 use uuid::Uuid;
 use structopt::StructOpt;
 use lazy_static::lazy_static;
@@ -15,8 +15,10 @@ use lazy_static::lazy_static;
 use crate::PROJECT_NAME;
 use std::io::{BufReader, BufRead, Error};
 use itertools::Itertools;
+use serde::ser::SerializeStruct;
 
 const CONFIG_FILE: &'static str = "config.toml";
+const PROGRAM_DATA: &'static str = "data.toml";
 
 lazy_static! {
     static ref DEVICE_ID: String = Uuid::new_v4().to_string();
@@ -69,6 +71,7 @@ merge_with! {
         device_id: Uuid,
 
         #[structopt(long, short = "n", default_value_os = &DEVICE_NAME)]
+        #[serde(alias = "device_name")]
         set_device_name: OsString,
 
         #[structopt(long, short = "p", default_value = "11529")]
@@ -91,16 +94,30 @@ merge_with! {
 }
 
 impl Options {
-    fn from_args_with_conf(path: &PathBuf) -> Self {
-        let from_conf = Self::from_conf(path);
+    fn from_args_with_conf() -> Self {
         let mut from_args = Self::from_args();
-        let matches = Self::clap().get_matches();
 
+        if from_args.no_config_file {
+            return from_args
+        }
+
+        let from_conf = match from_args.config_file {
+            None => match get_config_path() {
+                None => Self::default(),
+                Some(mut path) => {
+                    path.push(CONFIG_FILE);
+                    Self::from_conf(&path)
+                }
+            }
+            Some(ref path) => Self::from_conf(path)
+        };
+
+        let matches = Self::clap().get_matches();
         from_args.merge_with(from_conf, &matches);
         from_args
     }
 
-    fn deserialize(options: &str) -> Self {
+    fn deserialize_options(options: &str) -> Self {
         match toml::from_str::<Options>(&options) {
             Ok(config) => config,
             Err(e) => {
@@ -110,7 +127,7 @@ impl Options {
         }
     }
 
-    fn serialize(&self) -> Option<String> {
+    fn serialize_options(&self) -> Option<String> {
         let serialized = match toml::to_string(&self) {
             Ok(id) => id,
             Err(e) => {
@@ -122,17 +139,26 @@ impl Options {
     }
 
     fn from_conf(path: &PathBuf) -> Self {
-        match read_to_string(path) {
-            Ok(file) => Self::deserialize(&file),
-            Err(e) => {
-                warn!("Unable to read config file: {}", e);
-                return Self::default();
-            }
+        let file = Self::read_conf(path);
+        if file.is_empty() {
+            Self::default()
+        } else {
+            Self::deserialize_options(&file)
         }
     }
 
-    fn write_to_file(&self, path: &PathBuf) {
-        if let Some(x) = self.serialize() {
+    fn read_conf(path: &PathBuf) -> String {
+        match read_to_string(path) {
+            Ok(file) => file,
+            Err(e) => {
+                warn!("Unable to read config file: {}", e);
+                ""
+            }.to_string()
+        }
+    }
+
+    fn write_to_file(&mut self, path: &PathBuf) {
+        if let Some(x) = self.serialize_options() {
             write(path, x).unwrap_or_else(|e| warn!("Unable to write config: {}", e));
         };
     }
